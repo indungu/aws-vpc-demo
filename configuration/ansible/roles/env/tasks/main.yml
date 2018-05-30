@@ -1,0 +1,13 @@
+---
+# This role sets up common environment variables
+- name: Creating environment setup file
+  shell: |
+      bash -c 'cat > /etc/profile.d/setyummyvars.sh << EOF
+        export DATABASE_URL="postgres://yummydbadmin:password@localhost:5432/yummy_rest"
+        export APP_CONFIG="production"
+        export SECRET_KEY="mYd3rTyL!tTl#sEcR3t"
+        export FLASK_APP=run.py
+      EOF'
+      chmod +x /etc/profile.d/setyummyvars.sh
+
+...

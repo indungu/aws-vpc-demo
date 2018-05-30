@@ -1,0 +1,27 @@
+---
+- name: Cloning app repository
+  git:
+    repo: https://github.com/indungu/yummy-rest.git
+    dest: /home/ubuntu/yummy-rest
+    update: yes
+
+- name: Installing up virtualenv
+  command: pip3 install virtualenv
+    
+- name: Creating virtualenv
+  command: virtualenv /home/ubuntu/yummy-venv
+
+- name: Initializing virtual environment
+  pip:
+    requirements: /home/ubuntu/yummy-rest/requirements.txt
+    virtualenv: /home/ubuntu/yummy-venv
+
+- name: Creating App Launch Script
+  shell: |
+    bash -c 'cat > /home/ubuntu/launch.sh << EOF
+        source /etc/profile.d/setyummyvars.sh
+        source /home/ubuntu/yummy-venv/bin/activate
+        gunicorn --chdir /home/ubuntu/yummy-rest --bind 0.0.0.0:8000 app:APP
+    EOF'
+    chmod 744 /home/ubuntu/launch.sh
+...

@@ -1,0 +1,179 @@
+---
+# A simple Ansible setup
+
+- hosts: all
+  become: yes
+  become_method: sudo
+  become_user: root
+  remote_user: ubuntu
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tasks:
+    - name: Ensure appropriate locale is set
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+
+    - name: Update all packages to the latest version
+      apt:
+        update_cache: yes
+
+    - name: Adding PostgreSQL PPA
+      shell:
+        chdir: /etc/apt/sources.list.d/
+        creates: pgdg.list
+        cmd: |
+          bash -c 'cat > /etc/apt/sources.list.d/pgdg.list << EOF
+            deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+          EOF'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+    - name: Installing python3-pip, PostgreSQL and Nginx
+      apt:
+        update_cache: yes
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - python3-pip
+        - nginx
+        - postgresql
+        - libpq-dev
+
+    - name: Configuring PostgreSQL MD5 login.
+      shell: |
+        sed -i -e 's/peer/md5/g' /etc/postgresql/10/main/pg_hba.conf
+
+    - name: Installing psycopg2
+      shell: |
+        pip3 install psycopg2
+
+    - name: Creating Database Admin user
+      postgresql_user:
+        encrypted: yes
+        name: yummydbadmin
+        password: password
+        role_attr_flags: SUPERUSER,CREATEDB,CREATEROLE
+      become_user: postgres
+
+    - name: Creating App database
+      postgresql_db:
+        name: yummy_rest
+        encoding: UTF-8
+        lc_collate: en_US.UTF-8
+        lc_ctype: en_US.UTF-8
+        owner: yummydbadmin
+      become_user: postgres
+
+    - name: Configuring nginx startup service
+      service:
+        name: nginx
+        enabled: yes
+        state: started
+
+    - name: Cloning app repository
+      git:
+        repo: https://github.com/indungu/yummy-rest.git
+        dest: /home/ubuntu/yummy-rest
+        update: yes
+
+    - name: Installing virtualenv
+      command: pip3 install virtualenv
+      
+    - name: Creating virtualenv
+      command: virtualenv /home/ubuntu/yummy-venv
+
+    - name: Initializing virtual environment
+      pip:
+        requirements: /home/ubuntu/yummy-rest/requirements.txt
+        virtualenv: /home/ubuntu/yummy-venv
+
+    - name: Creating environment setup file
+      shell:
+        chdir: /home/ubuntu/
+        creates: .env
+        cmd: |
+          bash -c 'cat > /etc/profile.d/setyummyvars.sh << EOF
+            export DATABASE_URL="postgres://yummydbadmin:password@localhost:5432/yummy_rest"
+            export APP_CONFIG="production"
+            export SECRET_KEY="mYd3rTyL!tTl#sEcR3t"
+            export FLASK_APP=run.py
+          EOF'
+          chmod +x /etc/profile.d/setyummyvars.sh
+
+    - name: Creating database setup script
+      shell: |
+        bash -c 'cat > /home/ubuntu/db_init.sh << EOF
+          #!/bin/bash
+          source /etc/profile.d/setyummyvars.sh
+          source /home/ubuntu/yummy-venv/bin/activate
+          cd /home/ubuntu/yummy-rest
+          if [[ -d ./migrations ]]; then
+            python manage.py db migrate
+            python manage.py db upgrade
+          else
+            python manage.py db init
+            python manage.py db migrate
+            python manage.py db upgrade
+          fi
+          deactivate
+        EOF'
+        bash -c 'cat > /etc/profile.d/init_db.sh << EOF
+          sudo bash /home/ubuntu/db_init.sh
+        EOF'
+        chmod +x /etc/profile.d/init_db.sh
+        chmod +x /home/ubuntu/db_init.sh
+
+    - name: Creating App Launch Script
+      shell: |
+        bash -c 'cat > /home/ubuntu/launch.sh << EOF
+          source /etc/profile.d/setyummyvars.sh
+          source /home/ubuntu/yummy-venv/bin/activate
+          gunicorn --chdir /home/ubuntu/yummy-rest --bind 0.0.0.0:8000 app:APP
+        EOF'
+        chmod 744 /home/ubuntu/launch.sh
+    
+    - name: Removing default Nginx Sites Configuration
+      shell: |
+        rm -f /etc/nginx/sites-available/default
+        rm -f /etc/nginx/sites-enabled/default
+
+    - name: Adding app server site config to Nginx
+      shell: |
+        bash -c 'cat > /etc/nginx/sites-available/default << EOF
+          server {
+            listen 80 default_server;
+            listen [::]:80 default_server;
+            server_name _;
+            location / {
+              proxy_pass http://127.0.0.1:8000;
+              proxy_set_header HOST \$host;
+              proxy_set_header X-Forwarded-Proto \$scheme;
+              proxy_set_header X-Real-IP \$remote_addr;
+              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            }
+          }
+        EOF'
+        ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+
+    - name: Creating App startup service
+      shell: |
+        bash -c 'cat > /etc/systemd/system/yummy-rest.service <<EOF
+            [Unit]
+            Description=yummy-rest startup service
+            After=network.target
+
+            [Service]
+            User=ubuntu
+            ExecStart=/bin/bash /home/ubuntu/launch.sh
+
+            [Install]
+            WantedBy=multi-user.target
+        EOF'
+        chmod 664 /etc/systemd/system/yummy-rest.service
+
+    - name: Configuring service to run on reboot
+      service:
+        name: yummy-rest
+        enabled: yes
+        state: started
+...
