@@ -50,27 +50,4 @@
     owner: yummydbadmin
   become_user: postgres
 
-- name: Creating database setup script
-  shell: |
-    bash -c 'cat > /home/ubuntu/db_init.sh << EOF
-      #!/bin/bash
-      source /etc/profile.d/setyummyvars.sh
-      source /home/ubuntu/yummy-venv/bin/activate
-      cd /home/ubuntu/yummy-rest
-      if [[ -d ./migrations ]]; then
-        python manage.py db migrate
-        python manage.py db upgrade
-      else
-        python manage.py db init
-        python manage.py db migrate
-        python manage.py db upgrade
-      fi
-      deactivate
-    EOF'
-    bash -c 'cat > /etc/profile.d/init_db.sh << EOF
-      sudo bash /home/ubuntu/db_init.sh
-    EOF'
-    chmod +x /etc/profile.d/init_db.sh
-    chmod +x /home/ubuntu/db_init.sh
-
 ...
