@@ -21,6 +21,7 @@
     name: "{{ item }}"
     state: present
   with_items:
+    - python3-pip
     - postgresql
     - libpq-dev
 
