@@ -18,7 +18,7 @@
       },
       "instance_type": "t2.micro",
       "ssh_username": "ubuntu",
-      "ami_name": "yummy-rest-image {{timestamp}}",
+      "ami_name": "yummy-rest-db-image {{timestamp}}",
       "run_tags": {
         "name": "ubuntu-xenial-ansible",
         "role": "ub-1604"
@@ -26,7 +26,7 @@
       "tags": {
         "role": "ub-1604-image",
         "version": "v1.0",
-        "Name": "yummy-rest-image {{timestamp}}"
+        "Name": "yummy-rest-db-image {{timestamp}}"
       }
     }],
     "provisioners": [
