@@ -10,6 +10,7 @@
     ansible_python_interpreter: "/usr/bin/python3"
   roles:
     - setup
+    - env
     - app
     - nginx
     - services
