@@ -6,6 +6,7 @@ resource "aws_security_group" "yummy-priv-tf-secgrp" {
   description = "Inbound security group for private subnet instances"
   vpc_id      = "${aws_vpc.yummy-tf-vpc.id}"
 
+  # intranet http
   ingress {
     from_port   = 80
     to_port     = 80
@@ -13,6 +14,7 @@ resource "aws_security_group" "yummy-priv-tf-secgrp" {
     cidr_blocks = ["${var.vpc_cdir}"]
   }
 
+  # Intranet https
   ingress {
     from_port   = 443
     to_port     = 443
@@ -20,6 +22,15 @@ resource "aws_security_group" "yummy-priv-tf-secgrp" {
     cidr_blocks = ["${var.vpc_cdir}"]
   }
 
+  # intranet icmp from instances in VPC
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "icmp"
+    cidr_blocks = ["${var.vpc_cdir}"]
+  }
+
+  # intranet ssh from public subnets to private subnet instances
   ingress {
     from_port   = 22
     to_port     = 22

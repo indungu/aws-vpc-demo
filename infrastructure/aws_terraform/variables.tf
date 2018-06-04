@@ -34,18 +34,22 @@ variable "ssh_key" {
   default = "yummy"
 }
 
-variable "api_ami" {
-  default = "ami-0932b3342ec0a0674"
-}
+# variable "api_ami" {
+#   default = "ami-0932b3342ec0a0674"
+# }
 
-variable "frontend_ami" {
-  default = "ami-00f09436874cbf524"
-}
 
-variable "db_ami" {
-  default = "ami-018df8283a8895fed"
-}
+# variable "frontend_ami" {
+#   default = "ami-00f09436874cbf524"
+# }
 
-variable "nat_ami" {
-  default = "ami-0ee6a01b94febac19"
-}
+
+# variable "db_ami" {
+#   default = "ami-018df8283a8895fed"
+# }
+
+
+# variable "nat_ami" {
+#   default = "ami-0ee6a01b94febac19"
+# }
+

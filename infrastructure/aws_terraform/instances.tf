@@ -3,13 +3,14 @@
 
 # React App in the public subnet of Availability Zone A
 resource "aws_instance" "yummy_front_tf_aza" {
-  ami               = "${var.frontend_ami}"
-  instance_type     = "t2.micro"
-  availability_zone = "${var.zone_a}"
-  key_name          = "${var.ssh_key}"
-  subnet_id         = "${aws_subnet.yummy-tf-subnet-pub1.id}"
-  security_groups   = ["${aws_security_group.yummy-pub-tf-secgrp.id}"]
-  private_ip        = "172.168.0.10"
+  ami                         = "${data.aws_ami.yummy_react_image.id}"
+  instance_type               = "t2.micro"
+  availability_zone           = "${var.zone_a}"
+  key_name                    = "${var.ssh_key}"
+  associate_public_ip_address = true
+  subnet_id                   = "${aws_subnet.yummy-tf-subnet-pub1.id}"
+  security_groups             = ["${aws_security_group.yummy-pub-tf-secgrp.id}"]
+  private_ip                  = "172.168.0.10"
 
   tags {
     Name = "yummy-react-tf-aza"
@@ -18,13 +19,14 @@ resource "aws_instance" "yummy_front_tf_aza" {
 
 # React App in the public subnet of Availability Zone B
 resource "aws_instance" "yummy_front_tf_azb" {
-  ami               = "${var.frontend_ami}"
-  instance_type     = "t2.micro"
-  availability_zone = "${var.zone_b}"
-  key_name          = "${var.ssh_key}"
-  subnet_id         = "${aws_subnet.yummy-tf-subnet-pub2.id}"
-  security_groups   = ["${aws_security_group.yummy-pub-tf-secgrp.id}"]
-  private_ip        = "172.168.1.10"
+  ami                         = "${data.aws_ami.yummy_react_image.id}"
+  instance_type               = "t2.micro"
+  availability_zone           = "${var.zone_b}"
+  key_name                    = "${var.ssh_key}"
+  associate_public_ip_address = true
+  subnet_id                   = "${aws_subnet.yummy-tf-subnet-pub2.id}"
+  security_groups             = ["${aws_security_group.yummy-pub-tf-secgrp.id}"]
+  private_ip                  = "172.168.1.10"
 
   tags {
     Name = "yummy-react-tf-azb"
@@ -33,7 +35,7 @@ resource "aws_instance" "yummy_front_tf_azb" {
 
 # REST API App in the private subnet of Availability Zone A
 resource "aws_instance" "yummy_rest_tf_aza" {
-  ami               = "${var.api_ami}"
+  ami               = "${data.aws_ami.yummy_rest_image.id}"
   instance_type     = "t2.micro"
   availability_zone = "${var.zone_a}"
   key_name          = "${var.ssh_key}"
@@ -48,7 +50,7 @@ resource "aws_instance" "yummy_rest_tf_aza" {
 
 # REST API App in the public subnet of Availability Zone B
 resource "aws_instance" "yummy_rest_tf_azb" {
-  ami               = "${var.api_ami}"
+  ami               = "${data.aws_ami.yummy_rest_image.id}"
   instance_type     = "t2.micro"
   availability_zone = "${var.zone_b}"
   key_name          = "${var.ssh_key}"
@@ -63,7 +65,7 @@ resource "aws_instance" "yummy_rest_tf_azb" {
 
 # A NAT instance for eoutbound internet traffic from private subnets
 resource "aws_instance" "yummy_tf_nat" {
-  ami                         = "${var.nat_ami}"
+  ami                         = "${data.aws_ami.yummy_nat_image.id}"
   instance_type               = "t2.micro"
   availability_zone           = "${var.zone_a}"
   key_name                    = "${var.ssh_key}"
@@ -80,7 +82,7 @@ resource "aws_instance" "yummy_tf_nat" {
 
 # A database server instance for the backend applications
 resource "aws_instance" "yummy_tf_db" {
-  ami               = "${var.db_ami}"
+  ami               = "${data.aws_ami.yummy_db_image.id}"
   instance_type     = "t2.micro"
   availability_zone = "${var.zone_a}"
   key_name          = "${var.ssh_key}"
