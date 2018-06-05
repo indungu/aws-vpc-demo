@@ -35,4 +35,4 @@
             "playbook_file": "../ansible/api-provision-no-db-playbook.yml"
         }
     ]
-  }
+}
